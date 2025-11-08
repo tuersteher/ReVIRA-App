@@ -145,7 +145,7 @@
 // Switch to prefered Provider Suite
 const id="hu"
 let p=localStorage.getItem("provider")
-if(!p){p={providerName:"Magyar Államvasutak",providerID:"hu"};localStorage.setItem("provider",JSON.stringify(p))}
+if(!p){p={providerName:"MÁV Személyszállítás",providerID:"hu"};localStorage.setItem("provider",JSON.stringify(p))}
 else p=JSON.parse(p)
 if(p.providerID!==id)location.href=`../${p.providerID}/index.html`
     

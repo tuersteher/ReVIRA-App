@@ -63,8 +63,8 @@ if (!stationID) {
 
 	// Start loading data
 	loadData();
-	// reload every 5 seconds
-	setInterval(loadData, 5000);
+	// reload every 20 seconds
+	setInterval(loadData, 20000);
 }
 
 // Start Clock
@@ -87,6 +87,151 @@ function getSiteTypeFromURL() {
 	}
 	return "D";
 }
+
+// HU API
+// 1) Call the IK API
+async function fetchMavTimetable({ stationNumberCode, travelDateISO, minCount = "0", maxCount = "9999999" }) {
+  const body = {
+	type: "StationInfo",
+    stationNumberCode,
+    travelDate: travelDateISO, // e.g. "2025-11-04T00:00:00.000Z"
+    minCount,
+    maxCount,
+  };
+
+  const res = await fetch("https://round-dawn-ad4e.philipp-673.workers.dev/api/mav/raw", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Accept": "application/json", "UserSessionId": "" },
+    body: JSON.stringify(body),
+    mode: "cors",
+  });
+
+  if (!res.ok) throw new Error(`MÁV IK API error ${res.status}`);
+  return res.json();
+}
+
+// 2) Map MÁV rows -> the shape that updateTable() expects
+function mapMavToBoardRows(mavJson, stationID, isArrival) {
+  // Defensive: figure out where the list is
+  const rows = Array.isArray(mavJson) ? mavJson : (mavJson?.data ?? mavJson?.timetableRows ?? []);
+
+  const now = new Date();
+
+  return rows
+    .filter(r => {
+      // Keep only arrivals or departures for this view
+      const type = (r?.timetableRowType || r?.rowType || "").toString().toUpperCase(); // "DEPARTURE" | "ARRIVAL"
+      if (isArrival) return type.includes("ARRIVAL");
+      return type.includes("DEPARTURE");
+    })
+    .map(r => {
+      // --- Times
+      // Most IK payloads have planned/scheduled and optionally real/actual times
+      const plannedISO = r.plannedTime || r.scheduledTime || r.baseTime || r.timePlanned;
+      const actualISO  = r.actualTime || r.realTime || r.timeActual || null;
+      const plannedWhen = plannedISO ? new Date(plannedISO).toISOString() : null;
+      const when        = actualISO  ? new Date(actualISO).toISOString()  : plannedWhen;
+
+      // --- Line/train info
+      const trainNo   = r.trainNumber || r.trainNo || r.vehicleNumber || r.number;
+      const catCode   = (r.categoryCode || r.trainCategory || r.category || "").toString();
+      const catName   = (r.categoryName || r.categoryText || r.category || "").toString();
+      const operator  = (r.operatorCode || r.operator || "MAV").toString().toUpperCase();
+
+      // Make a display name like "IC 123" / "R 3723" / "S 80"
+      const lineName = [catCode || catName, trainNo].filter(Boolean).join(" ").trim();
+
+      // Map MÁV categories to your board products
+      const product = mapProductFromMav(catCode, catName);       // "nationalExpress" | "national" | "regionalExpress" | "regional" | "suburban"
+      const productName = catName || catCode || product;
+
+      // --- Platforms
+      const plannedPlatform = r.plannedPlatform || r.scheduledPlatform || r.platformPlanned || r.platformOriginal || null;
+      const platform        = r.actualPlatform  || r.platform || r.platformReal || null;
+
+      // --- Origin/Destination (for your wide cell)
+      const originName      = r.originStationName || r.fromStationName || r.originName || r.provenance || r.fromName || "";
+      const destinationName = r.destinationStationName || r.toStationName || r.destinationName || r.destination || r.toName || "";
+
+      // --- Status / remarks
+      const cancelled = !!(r.isCancelled || r.cancelled || r.status === "CANCELLED");
+      const delayMin  = Number.isFinite(+r.delayMinutes) ? +r.delayMinutes : computeDelayMinutes(plannedWhen, when);
+
+      const remarks = [];
+      if (cancelled) remarks.push({ type: "status", code: "cancelled", text: "Zug fällt aus" });
+      if (Number.isFinite(delayMin) && delayMin > 0) remarks.push({ type: "status", code: "delayed", text: `Verspätung ${delayMin} min` });
+      if (r.notice || r.infoText) remarks.push({ type: "info", code: "info", text: r.notice || r.infoText });
+
+      // --- Trip ID (stable enough for your links)
+      const tripId = buildTripId({ operator, trainNo, plannedWhen, originName, destinationName });
+
+      // --- Assemble the board row your updateTable() already understands
+      return {
+        plannedWhen,              // ISO string
+        when,                     // ISO string or same as plannedWhen
+        tripId,                   // string
+        line: {
+          name: lineName,         // e.g. "IC 123"
+          product,                // e.g. "regionalExpress"
+          productName,            // e.g. "IC"
+          fahrtNr: trainNo?.toString() || "",
+          operator: { id: operator },
+        },
+        destination: isArrival ? undefined : { name: destinationName || "Unbekannt" },
+        provenance: isArrival ? (originName || "Unbekannt") : undefined,
+        platform: platform ?? null,
+        plannedPlatform: plannedPlatform ?? null,
+        remarks,
+      };
+    });
+}
+
+// Helpers
+function mapProductFromMav(catCode, catName) {
+  const code = (catCode || catName || "").toUpperCase();
+  // Tune these as needed for your categories
+  if (/(RJX?|EC|EN|IC|IN|EX|ICE)/.test(code)) return "nationalExpress";  // long-distance premium
+  if (/(IR|REX|RE)/.test(code)) return "regionalExpress";
+  if (/(R|PR)/.test(code)) return "regional";
+  if (/^S\b|SUBURBAN|HÉV/.test(code)) return "suburban";
+  // fallback
+  return "regional";
+}
+
+function computeDelayMinutes(plannedISO, actualISO) {
+  if (!plannedISO || !actualISO) return 0;
+  const p = new Date(plannedISO);
+  const a = new Date(actualISO);
+  return Math.max(0, Math.round((a - p) / 60000));
+}
+
+function buildTripId({ operator, trainNo, plannedWhen, originName, destinationName }) {
+  return [
+    operator || "MAV",
+    trainNo || "X",
+    plannedWhen ? new Date(plannedWhen).getTime() : "T",
+    originName || "",
+    destinationName || ""
+  ].join("_").replace(/\s+/g, "-");
+}
+
+// 3) A loader that splits ARR/DEP and feeds updateTable()
+async function loadDataFromMav() {
+  // You currently read `stationID` from URL; for the IK API you need the **IBNR/number code**:
+  const stationNumberCode = "005511130"; // If your ?station= already holds "005511130", keep this.
+  // If not, translate stationID -> IBNR before calling (you already fetch station info above; add the mapping there).
+
+  const travelDateISO =
+    new Date().toLocaleString("sv-SE", { timeZone: "Europe/Budapest" }).replace(" ", "T") + ".000Z";
+
+  const raw = await fetchMavTimetable({ stationNumberCode, travelDateISO });
+
+  return raw;
+}
+
+
+
+
 
 // Fetch API Source to get station details
 async function fetchStationData(stationID) {
@@ -117,23 +262,22 @@ function processStationInfo(data, station) {
 	} else if ((data.products.nationalExpress || data.products.national || data.products.regionalExpress || data.products.regional) && data.products.suburban === true) {
 		navbarContent += `
 			<div class="tabs">
-				<a href="departure.html?station=${station}" class="${siteType === 'D' ? 'active' : ''}">&nbsp;Induló&nbsp;</a>
-				<a href="arrival.html?station=${station}" class="${siteType === 'A' ? 'active' : ''}">&nbsp;Érkező&nbsp;</a>
-
-				<a href="combo.html?station=${station}" class="${siteType === 'C' ? 'active' : ''}">&nbsp;Kombo&nbsp;</a>
+				<a href="departure.html?station=${station}" class="${siteType === 'D' ? 'active' : ''}">&nbsp;Abfahrt&nbsp;</a>
+				<a href="arrival.html?station=${station}" class="${siteType === 'A' ? 'active' : ''}">&nbsp;Ankunft&nbsp;</a>
+				<a href="suburban.html?station=${station}" class="${siteType === 'S' ? 'active' : ''}">&nbsp;S-Bahn&nbsp;</a>
+				<a href="combo.html?station=${station}" class="${siteType === 'C' ? 'active' : ''}">&nbsp;Combo&nbsp;</a>
 			</div>`;
-		hasSuburban = false;
-		//true <a href="suburban.html?station=${station}" class="${siteType === 'S' ? 'active' : ''}">&nbsp;S-Bahn&nbsp;</a>
+		hasSuburban = true;
 	} else if (data.products.suburban === true && data.products.regional === false) {
 		if (siteType !== 'S') {
 			window.location.href = `suburban.html?station=${station}`;
 		}
 		navbarContent += `
 			<div class="tabs">
-				<a href="#" class="disabled">&nbsp;Induló&nbsp;</a>
-				<a href="#" class="disabled">&nbsp;Érkező&nbsp;</a>
+				<a href="#" class="disabled">&nbsp;Abfahrt&nbsp;</a>
+				<a href="#" class="disabled">&nbsp;Ankunft&nbsp;</a>
 				<a href="suburban.html?station=${station}" class="active">&nbsp;S-Bahn&nbsp;</a>
-				<a href="combo.html?station=${station}" class="${siteType === 'C' ? 'active' : ''}">&nbsp;Kombo&nbsp;</a>
+				<a href="combo.html?station=${station}" class="${siteType === 'C' ? 'active' : ''}">&nbsp;Combo&nbsp;</a>
 			</div>`;
 	} else {
 		if (siteType === 'S') {
@@ -141,10 +285,10 @@ function processStationInfo(data, station) {
 		}
 		navbarContent += `
 			<div class="tabs">
-				<a href="departure.html?station=${station}" class="${siteType === 'D' ? 'active' : ''}">&nbsp;Induló&nbsp;</a>
-				<a href="arrival.html?station=${station}" class="${siteType === 'A' ? 'active' : ''}">&nbsp;Érkező&nbsp;</a>
+				<a href="departure.html?station=${station}" class="${siteType === 'D' ? 'active' : ''}">&nbsp;Abfahrt&nbsp;</a>
+				<a href="arrival.html?station=${station}" class="${siteType === 'A' ? 'active' : ''}">&nbsp;Ankunft&nbsp;</a>
 				<a href="#" class="disabled">&nbsp;S-Bahn&nbsp;</a>
-				<a href="combo.html?station=${station}" class="${siteType === 'C' ? 'active' : ''}">&nbsp;Kombo&nbsp;</a>
+				<a href="combo.html?station=${station}" class="${siteType === 'C' ? 'active' : ''}">&nbsp;Combo&nbsp;</a>
 			</div>`;
 	}
 
@@ -172,28 +316,8 @@ function updateClock() {
 
 // Load Data
 async function loadData() {
-	if (siteType === 'C') {
-		await loadDepartures();
-		await loadArrivals();
-	} else {
-		const apiUrl = `https://data.cuzimmartin.dev/dynamic-${siteType === 'A' ? 'arrivals' : 'departures'}?stationID=${stationID}`;
-		try {
-			const response = await fetch(apiUrl, { method: "GET", mode: "cors" });
-			if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-			const jsonData = await response.json();
-			const data = siteType === 'A' ? jsonData.arrivals : jsonData.departures;
-			if (Array.isArray(data)) {
-				updateTable(data, "tableBody", siteType === 'A');
-			} else {
-				document.getElementById('tableBody').innerHTML = '<tr><td colspan="4">Keine Daten verfügbar</td></tr>';
-			}
-		} catch (error) {
-			console.error('Fehler beim Abrufen:', error);
-			if (document.getElementById('tableBody').children.length === 0) {
-				document.getElementById('tableBody').innerHTML = '<tr><td colspan="4">Fehler beim Laden der Daten</td></tr>';
-			}
-		}
-	}
+	const tb = document.getElementById("tableBody");
+	tb.innerHTML = JSON.stringify((await loadDataFromMav()));
 }
 
 async function loadDepartures() {
@@ -368,5 +492,5 @@ function getAbMessage(dateTimeString) {
 	const now = new Date();
 	const timediff = Math.round((dateTime - now) / (1000 * 60));
 
-	return timediff <= 0 ? '<img src="./assets/depart.gif" class="mini">' : '';
+	return timediff <= 0 ? '<img src="../assets/depart.gif" class="mini">' : '';
 }

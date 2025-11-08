@@ -175,7 +175,7 @@ async function loadData() {
 		await loadDepartures();
 		await loadArrivals();
 	} else {
-		const apiUrl = `https://data.cuzimmartin.dev/dynamic-${siteType === 'A' ? 'arrivals' : 'departures'}?stationID=${stationID}`;
+		const apiUrl = `https://round-dawn-ad4e.philipp-673.workers.dev/dynamic-${siteType === 'A' ? 'arrivals' : 'departures'}?stationID=${stationID}`;
 		try {
 			const response = await fetch(apiUrl, { method: "GET", mode: "cors" });
 			if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -189,14 +189,14 @@ async function loadData() {
 		} catch (error) {
 			console.error('Fehler beim Abrufen:', error);
 			if (document.getElementById('tableBody').children.length === 0) {
-				document.getElementById('tableBody').innerHTML = '<tr><td colspan="4">Fehler beim Laden der Daten</td></tr>';
+				document.getElementById('tableBody').innerHTML = '<tr><td colspan="4">Fehler beim Laden der MÁVDaten</td></tr>';
 			}
 		}
 	}
 }
 
 async function loadDepartures() {
-	const apiUrl = `https://data.cuzimmartin.dev/dynamic-departures?stationID=${stationID}`;
+	const apiUrl = `https://round-dawn-ad4e.philipp-673.workers.dev/dynamic-departures?stationID=${stationID}`;
 	try {
 		const response = await fetch(apiUrl, { method: "GET", mode: "cors" });
 		if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -206,7 +206,7 @@ async function loadDepartures() {
 		}
 	} catch {
 		if (document.getElementById('tableBody').children.length === 0) {
-			document.getElementById('tableBody').innerHTML = '<tr><td colspan="4">Fehler beim Laden der Abfahrten</td></tr>';
+			document.getElementById('tableBody').innerHTML = '<tr><td colspan="4">Fehler beim Laden der MÁV-Abfahrten</td></tr>';
 		}
 	}
 }
@@ -345,7 +345,7 @@ function updateTable(data, tbodyId = "tableBody", isArrival = false) {
 		// Status cell
 		const statusCell = row.insertCell(4);
 		statusCell.classList.add("zerotable");
-		statusCell.innerHTML = isCancelled ? `<img src="./assets/cancelled.webp" class="mini">` : abMessage;
+		statusCell.innerHTML = isCancelled ? `<img src="../assets/cancelled.webp" class="mini">` : abMessage;
 	});
 
 	if (findtrain === 0) {

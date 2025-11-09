@@ -1,9 +1,9 @@
   // ---- Config: modality mapping (adjust codes to your dataset if needed) ----
   // Keep this table in one place so you can tweak it easily later.
   const MODALITY = {
-    TRAIN:   new Set([100,110,120]), // classic rail services
-    HEV:     new Set([200]),         // HÉV / suburban rail
-    BUS:     new Set([300,310,400]), // bus / coach / other
+    TRAIN:   new Set([100]), // classic rail services
+    HEV:     new Set([109]),         // HÉV / suburban rail
+    BUS:     new Set([200]), // bus / coach / other
   };
 
   // Simple helpers for classification

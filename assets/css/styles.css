@@ -1486,7 +1486,7 @@ td {
 
 .linebadge {
     width: 150px;
-    background-color: #041E42;
+    background-color: grey;
     color: #fff;
     text-align: center;
     font-weight: bold;

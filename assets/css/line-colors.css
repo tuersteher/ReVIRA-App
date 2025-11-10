@@ -26,65 +26,37 @@ Please read comments carefully.
 }
 
 .EN, .NJ, .ICN, .ES{
-	background-image: url('../stars.jpg');
+	background-image: url('../stars.jpg') !important;
 	background-size: 200px;
-	color: #fff;
 }
 
-.international {
-	background-image: url('../eustars.jpg');
-	background-size: 200px;
-	color: #fff;
+.rjx {
+	background-color: #7B0E07 !important;
 }
 
-.euroregio {
-	background-image: url('../euregiostars.jpg');
-	background-size: 200px;
-	color: #fff;
+.international .interurban .IC .EC {
+	background-color: #274F96 !important
 }
 
-.nationalExpress, .national, .westbahn.WB, .regiojet.IC {
-	background-color: #ec0016;
-	color: #fff;
-}
-
-.interurban .IC {
-	background-color: #274F96;
-	color: #fff;
-}
-
-.regional, .regionalS {
-	background-color: #00A0E3;
-	color: #fff;
+.regional, .regionalS, .euroregio {
+	background-color: #00A0E3 !important;
 }
 
 .accellerated {
-	background-color: #b0cb1f;
-	color: #fff;
+	background-color: #b0cb1f !important;
 }
 
+.zonazo {
+	background-color: #FECC00 !important;
+	color: #323232 !important;
+}
 
 
 .EN#linebadge, .NJ#linebadge, .ICN#linebadge, .ES#linebadge  {
 	border: 1px solid #2f2e2e;
 }
 
-.FLX {
-	background-color: #a2e53f;
-	color: #fff ;
-}
-
-.IRE, .RE, .MEX, .TLX, .REX, .CJX, .FEX {
-	background-color: #1455c0;
-	color: #fff;
-}
-
-.RE.db-fernverkehr-ag {
-	background-color: #fdcc00;
-	color: #000;
-}
-
-.replacement {
+.replacement .Pótló {
   --stripe: 24px;                  /* stripe thickness */
   --yellow: #ffd000;              
   --black:  #000;
@@ -100,9 +72,8 @@ Please read comments carefully.
 }
 
 /* Optional: make text readable on top */
-.replacement,
+.international *, .euroregio *,
 .replacement * {
-  color: #111;                     /* adjust as needed */
   text-shadow: 0 1px 2px rgba(255,255,255,.4);
 }
 

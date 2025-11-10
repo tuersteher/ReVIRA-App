@@ -34,15 +34,27 @@ Please read comments carefully.
 	background-color: #7B0E07 !important;
 }
 
-.international .interurban .IC .EC {
-	background-color: #274F96 !important
+.international, .IC {
+	background-color: #274F96;
+}
+
+.express {
+	background-color: #C82227;
+}
+
+.fast {
+	background-color: #C82227;
+}
+
+.semiir, .InterRégió {
+	background-color: #29803C;
 }
 
 .regional, .regionalS, .euroregio {
 	background-color: #00A0E3 !important;
 }
 
-.accellerated {
+.accelerated {
 	background-color: #b0cb1f !important;
 }
 
@@ -51,13 +63,12 @@ Please read comments carefully.
 	color: #323232 !important;
 }
 
-
 .EN#linebadge, .NJ#linebadge, .ICN#linebadge, .ES#linebadge  {
 	border: 1px solid #2f2e2e;
 }
 
-.replacement .Pótló {
-  --stripe: 24px;                  /* stripe thickness */
+.replacement, .Pótló {
+  --stripe: 12px;                  /* stripe thickness */
   --yellow: #ffd000;              
   --black:  #000;
 
@@ -69,12 +80,8 @@ Please read comments carefully.
       var(--black)  var(--stripe),
       var(--black)  calc(var(--stripe) * 2)
     );
-}
 
-/* Optional: make text readable on top */
-.international *, .euroregio *,
-.replacement * {
-  text-shadow: 0 1px 2px rgba(255,255,255,.4);
+	text-shadow: black 1px 0 10px;
 }
 
 

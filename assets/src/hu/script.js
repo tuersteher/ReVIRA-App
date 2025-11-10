@@ -117,10 +117,9 @@ function processStationInfo(data, station) {
 	} else if ((data.products.nationalExpress || data.products.national || data.products.regionalExpress || data.products.regional) && data.products.suburban === true) {
 		navbarContent += `
 			<div class="tabs">
-				<a href="departure.html?station=${station}" class="${siteType === 'D' ? 'active' : ''}">&nbsp;Abfahrt&nbsp;</a>
-				<a href="arrival.html?station=${station}" class="${siteType === 'A' ? 'active' : ''}">&nbsp;Ankunft&nbsp;</a>
-				<a href="suburban.html?station=${station}" class="${siteType === 'S' ? 'active' : ''}">&nbsp;S-Bahn&nbsp;</a>
-				<a href="combo.html?station=${station}" class="${siteType === 'C' ? 'active' : ''}">&nbsp;Combo&nbsp;</a>
+				<a href="departure.html?station=${station}" class="${siteType === 'D' ? 'active' : ''}">&nbsp;Induló&nbsp;</a>
+				<a href="arrival.html?station=${station}" class="${siteType === 'A' ? 'active' : ''}">&nbsp;Érekző&nbsp;</a>
+				<a href="combo.html?station=${station}" class="${siteType === 'C' ? 'active' : ''}">&nbsp;Összes&nbsp;</a>
 			</div>`;
 		hasSuburban = true;
 	} else if (data.products.suburban === true && data.products.regional === false) {
@@ -129,10 +128,9 @@ function processStationInfo(data, station) {
 		}
 		navbarContent += `
 			<div class="tabs">
-				<a href="#" class="disabled">&nbsp;Abfahrt&nbsp;</a>
-				<a href="#" class="disabled">&nbsp;Ankunft&nbsp;</a>
-				<a href="suburban.html?station=${station}" class="active">&nbsp;S-Bahn&nbsp;</a>
-				<a href="combo.html?station=${station}" class="${siteType === 'C' ? 'active' : ''}">&nbsp;Combo&nbsp;</a>
+				<a href="#" class="disabled">&nbsp;Induló&nbsp;</a>
+				<a href="#" class="disabled">&nbsp;Érekző&nbsp;</a>
+				<a href="combo.html?station=${station}" class="${siteType === 'C' ? 'active' : ''}">&nbsp;Összes&nbsp;</a>
 			</div>`;
 	} else {
 		if (siteType === 'S') {
@@ -140,10 +138,9 @@ function processStationInfo(data, station) {
 		}
 		navbarContent += `
 			<div class="tabs">
-				<a href="departure.html?station=${station}" class="${siteType === 'D' ? 'active' : ''}">&nbsp;Abfahrt&nbsp;</a>
-				<a href="arrival.html?station=${station}" class="${siteType === 'A' ? 'active' : ''}">&nbsp;Ankunft&nbsp;</a>
-				<a href="#" class="disabled">&nbsp;S-Bahn&nbsp;</a>
-				<a href="combo.html?station=${station}" class="${siteType === 'C' ? 'active' : ''}">&nbsp;Combo&nbsp;</a>
+				<a href="departure.html?station=${station}" class="${siteType === 'D' ? 'active' : ''}">&nbsp;Induló&nbsp;</a>
+				<a href="arrival.html?station=${station}" class="${siteType === 'A' ? 'active' : ''}">&nbsp;Érekző&nbsp;</a>
+				<a href="combo.html?station=${station}" class="${siteType === 'C' ? 'active' : ''}">&nbsp;Összes&nbsp;</a>
 			</div>`;
 	}
 

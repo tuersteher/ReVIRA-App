@@ -366,9 +366,10 @@ function displayResults(data) {
 
             if (isBus) {
                 const img = document.createElement('img');
-                img.src = '../assets/icons/busz.svg';
+                img.src = '../assets/icons/busstop.svg';
                 img.alt = 'Bus Icon';
                 img.classList.add('bigicon');
+                img.classList.add('inverted');
                 link.appendChild(img);
             }
 

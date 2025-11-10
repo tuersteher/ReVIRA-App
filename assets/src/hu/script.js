@@ -63,8 +63,8 @@ if (!stationID) {
 
 	// Start loading data
 	loadData();
-	// reload every 5 seconds
-	setInterval(loadData, 50000);
+	// reload every 30 seconds
+	setInterval(loadData, 30000);
 }
 
 // Start Clock

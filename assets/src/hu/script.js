@@ -121,8 +121,8 @@ function processStationInfo(modalities, name, stationID) {
 	navbarContent += `
 			<div class="tabs">
 				<a href="departure.html?station=${stationID}" class="${siteType === 'D' ? 'active' : ''}">&nbsp;Induló&nbsp;</a>
-				<a href="arrival.html?station=${stationID}" class="${siteType === 'A' ? 'active' : ''}">&nbsp;Érekző&nbsp;</a>
-				<a href="combo.html?station=${stationID}" class="${siteType === 'C' ? 'active' : ''}">&nbsp;Összes&nbsp;</a>
+				<s><a href="arrival.html?station=${stationID}" class="${siteType === 'A' ? 'active' : ''}">&nbsp;Érkező&nbsp;</a></s>
+				<s><a href="combo.html?station=${stationID}" class="${siteType === 'C' ? 'active' : ''}">&nbsp;Összes&nbsp;</a></s>
 			</div>`;
 
 	navbarContent += `

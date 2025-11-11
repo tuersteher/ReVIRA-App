@@ -80,7 +80,7 @@ function scoreDoc(doc, queryRaw) {
 
   // name-based boosts
   const nn = doc.nn || normalize(doc.n);
-  if (nn === q)            score += 35;
+  if (nn === q)            score += 150;
   else if (nn.startsWith(q)) score += 18;
   else if (nn.includes(q))   score += 6;
 

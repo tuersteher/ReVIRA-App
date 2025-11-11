@@ -75,14 +75,14 @@ function scoreDoc(doc, queryRaw) {
   let score = doc.score || 0;
 
   // code-based boosts
-  if (doc.c === queryRaw)             score += 60;
-  else if (doc.c.startsWith(queryRaw)) score += 28;
+  if (doc.c === queryRaw)             score += 200;
+  else if (doc.c.startsWith(queryRaw)) score += 175;
 
   // name-based boosts
   const nn = doc.nn || normalize(doc.n);
   if (nn === q)            score += 150;
-  else if (nn.startsWith(q)) score += 18;
-  else if (nn.includes(q))   score += 6;
+  else if (nn.startsWith(q)) score += 100;
+  else if (nn.includes(q))   score += 35;
 
   // category boosts
   if (doc.i108 && isTrain(doc)) score += 15;

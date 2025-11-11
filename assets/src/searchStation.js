@@ -236,30 +236,49 @@ function displayResults(data) {
     });
 }
 
+// ---- Fast normalization for ids ----
+function normId(id) {
+  return String(id ?? '').trim();
+}
+
+// ---- Build a fast lookup map once ----
+let stationByCode = null;
+function ensureStationsReady() {
+  if (!Array.isArray(stations) || stations.length === 0) {
+    console.error('Stations array is missing or empty. Check stations-data.js and script order.');
+    return false;
+  }
+  if (!stationByCode) {
+    stationByCode = new Map(stations.map(s => [String(s.c), s]));
+    console.log('✅ Station map built:', stationByCode.size, 'entries');
+  }
+  return true;
+}
+
 /**
- * Returns the canonical station name and modalities for a given station ID (code).
- * @param {string} stationId - The station's code (value of `c` in your stations data)
- * @returns {{name: string, modalities: number[]}|null}
+ * Returns canonical name + modalities by station ID (code).
+ * @param {string} stationId
+ * @returns {{name:string|null, modalities:number[]}|null}
  */
 window.getStationInfoById = function getStationInfoById(stationId) {
-  if (!stationId || !Array.isArray(window.stations)) {
-    console.warn('getStationInfoById: stations not initialized or invalid id');
+  const sid = normId(stationId);
+  if (!sid) {
+    console.warn('getStationInfoById: invalid id:', stationId);
     return null;
   }
+  if (!ensureStationsReady()) return null;
 
-  // Direct lookup from the in-memory array
-  const match = window.stations.find(s => s.c === stationId);
-
-  if (match) {
+  const s = stationByCode.get(sid);
+  if (s) {
     return {
-      name: match.n || null,
-      modalities: Array.isArray(match.m) ? match.m : []
+      name: s.n || null,
+      modalities: Array.isArray(s.m) ? s.m : []
     };
   }
 
-  // Optional fallback: if MiniSearch has the index loaded
+  // Optional fallback to MiniSearch store if available
   if (window.mini && typeof window.mini.document === 'function') {
-    const doc = window.mini.document(stationId);
+    const doc = window.mini.document(sid);
     if (doc) {
       return {
         name: doc.n || null,
@@ -268,9 +287,12 @@ window.getStationInfoById = function getStationInfoById(stationId) {
     }
   }
 
-  console.warn('Station not found for id:', stationId);
+  console.warn('getStationInfoById: station not found for id:', sid);
   return null;
 };
+
+// (Optional) run once after DOM is ready to prebuild the map
+document.addEventListener('DOMContentLoaded', ensureStationsReady);
 
 
 window.addEventListener("load", () => {

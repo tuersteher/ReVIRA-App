@@ -25,7 +25,7 @@ Please read comments carefully.
 	background-color: #00a5df!important;
 }
 
-.EN, .NJ, .ICN, .ES{
+.EN, .NJ, .ICN, .ES, .Night {
 	background-image: url('../stars.jpg') !important;
 	background-size: 200px;
 }
@@ -34,7 +34,7 @@ Please read comments carefully.
 	background-color: #7B0E07 !important;
 }
 
-.international, .IC {
+.international, .International, .IC {
 	background-color: #274F96;
 }
 
@@ -61,6 +61,22 @@ Please read comments carefully.
 .zonazo {
 	background-color: #FECC00 !important;
 	color: #323232 !important;
+}
+
+.H5 {
+	background-color: #900166;
+}
+
+.H6 {
+	background-color: #814F26;
+}
+
+.H7 {
+	background-color: #F47D35;
+}
+
+.H8, .H9 {
+	background-color: #F27689;
 }
 
 .EN#linebadge, .NJ#linebadge, .ICN#linebadge, .ES#linebadge  {

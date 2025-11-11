@@ -43,11 +43,11 @@ if (localStorage.getItem('disabletouch') === 'true') {
     document.getElementById('notouch').classList.remove('hidden');
 } 
 
-let showsuburban = urlParams.get('suburban');
+//let showsuburban = urlParams.get('suburban');
 
-if (localStorage.getItem('showsuburbans') === 'true') {
-    showsuburban = "show";
-} 
+//if (localStorage.getItem('showsuburbans') === 'true') {
+//    showsuburban = "show";
+//} 
 // END EXPERTMODE
 
 const stationID = urlParams.get('station');
@@ -90,59 +90,40 @@ function getSiteTypeFromURL() {
 
 // Fetch API Source to get station details
 async function fetchStationData(stationID) {
-	try {
-		const response = await fetch(`https://data.cuzimmartin.dev/station?stationID=${stationID}`, {
-			method: "GET",
-			mode: "cors"
-		});
-		if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-		const data = await response.json();
-		processStationInfo(data, stationID);
-	} catch (error) {
-		console.error('Fehler beim Abrufen der Stationsdaten:', error);
-		document.getElementById('stationname').textContent = 'Fehler beim Laden';
+	if (!stationID) {
+		console.warn('fetchStationData: no stationID provided');
+		return null;
 	}
+	if (typeof window.getStationInfoById !== 'function') {
+		console.error('fetchStationData: getStationInfoById is not available. Ensure search.js is loaded before script.js.');
+		return null;
+	}
+
+	const info = window.getStationInfoById(stationID);
+	if (!info) {
+		console.warn('fetchStationData: station not found for id:', stationID);
+		return null;
+	}
+
+	const name = info.name || null;
+	const modalities = Array.isArray(info.modalities) ? info.modalities : [];
+	processStationInfo(modalities, name, stationID);
 }
 
 // Navbar + Titel
-function processStationInfo(data, station) {
+function processStationInfo(modalities, name, stationID) {
 	const navbarDiv = document.getElementById('navbar');
 	let navbarContent = '';
+	const hasTrain = modalities.includes(100);
+	const hasSuburban = modalities.includes(109);
+	const hasBus = modalities.includes(200);
 
-	if (siteType === 'L') {
-		navbarContent += `
+	navbarContent += `
 			<div class="tabs">
-				<a href="#" class="active">&nbsp;Nahverkehr&nbsp;</a>
+				<a href="departure.html?station=${stationID}" class="${siteType === 'D' ? 'active' : ''}">&nbsp;Induló&nbsp;</a>
+				<a href="arrival.html?station=${stationID}" class="${siteType === 'A' ? 'active' : ''}">&nbsp;Érekző&nbsp;</a>
+				<a href="combo.html?station=${stationID}" class="${siteType === 'C' ? 'active' : ''}">&nbsp;Összes&nbsp;</a>
 			</div>`;
-	} else if ((data.products.nationalExpress || data.products.national || data.products.regionalExpress || data.products.regional) && data.products.suburban === true) {
-		navbarContent += `
-			<div class="tabs">
-				<a href="departure.html?station=${station}" class="${siteType === 'D' ? 'active' : ''}">&nbsp;Induló&nbsp;</a>
-				<a href="arrival.html?station=${station}" class="${siteType === 'A' ? 'active' : ''}">&nbsp;Érekző&nbsp;</a>
-				<a href="combo.html?station=${station}" class="${siteType === 'C' ? 'active' : ''}">&nbsp;Összes&nbsp;</a>
-			</div>`;
-		hasSuburban = true;
-	} else if (data.products.suburban === true && data.products.regional === false) {
-		if (siteType !== 'S') {
-			window.location.href = `suburban.html?station=${station}`;
-		}
-		navbarContent += `
-			<div class="tabs">
-				<a href="#" class="disabled">&nbsp;Induló&nbsp;</a>
-				<a href="#" class="disabled">&nbsp;Érekző&nbsp;</a>
-				<a href="combo.html?station=${station}" class="${siteType === 'C' ? 'active' : ''}">&nbsp;Összes&nbsp;</a>
-			</div>`;
-	} else {
-		if (siteType === 'S') {
-			window.location.href = `departure.html?station=${station}`;
-		}
-		navbarContent += `
-			<div class="tabs">
-				<a href="departure.html?station=${station}" class="${siteType === 'D' ? 'active' : ''}">&nbsp;Induló&nbsp;</a>
-				<a href="arrival.html?station=${station}" class="${siteType === 'A' ? 'active' : ''}">&nbsp;Érekző&nbsp;</a>
-				<a href="combo.html?station=${station}" class="${siteType === 'C' ? 'active' : ''}">&nbsp;Összes&nbsp;</a>
-			</div>`;
-	}
 
 	navbarContent += `
 		<div class="iconbar">
@@ -153,9 +134,8 @@ function processStationInfo(data, station) {
 
 	navbarDiv.innerHTML = navbarContent;
 
-	document.getElementById('stationname').textContent = data.name;
-	if (document.getElementById('stationname2')) {document.getElementById('stationname2').textContent = data.name;}
-	document.getElementById('title').textContent = data.name;
+	document.getElementById('stationname').textContent = name;
+	document.getElementById('title').textContent = name;
 }
 
 // Clock
@@ -345,10 +325,10 @@ function updateTable(data, tbodyId = "tableBody", isArrival = false) {
 		statusCell.innerHTML = isCancelled ? `<img src="../assets/cancelled.webp" class="mini">` : abMessage;
 	});
 
-	if (findtrain === 0) {
-		tableBody.innerHTML = `<tr><td colspan="4">Keine Daten verfügbar</td></tr>`;
-		window.location.replace(`suburban.html?station=${stationID}`);
-	}
+	// if (findtrain === 0) {
+	//	tableBody.innerHTML = `<tr><td colspan="4">Keine Daten verfügbar</td></tr>`;
+	//	window.location.replace(`suburban.html?station=${stationID}`);
+	//}
 }
 
 function formatTime(dateString) {
